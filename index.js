@@ -21,8 +21,7 @@ const pool = require("./db");
 
 async function getPgVersion() {
   try {
-    const result = await pool`select version()`;
-
+    const result = await pool`select * from vendor`;
     app.listen(process.env.PORT, () => {
       console.log("Welcome to mehdi empire");
     });
