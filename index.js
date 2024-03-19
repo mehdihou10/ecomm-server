@@ -44,7 +44,11 @@ async function getPgVersion() {
   getPgVersion();
 
 //routes
+const userRouter = require('./routes/user.route');
+const vendorRouter = require('./routes/vendor.route');
 
+app.use('/api/users',userRouter);
+app.use('/api/vendors',vendorRouter);
 
 //error handeler
 app.use((err,req,res,next)=>{
