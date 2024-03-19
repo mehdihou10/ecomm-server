@@ -16,7 +16,7 @@ const pool = postgres({
     host: "localhost",
     user: "postgres",
     password: process.env.PASSWORD,
-    database: "ecomm_final"
+    database: process.env.DB
 
 });
 
