@@ -10,8 +10,8 @@ const register = async (req, res,next) => {
   try {
     const { first_name, last_name, email, password, image } = req.body;
     const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.json({ message: errors.array() });
+    if (errors) {
+      return res.status(400).send({ message: errors.array() });
     }
     const olderUser = await pool`select * from users where email=${email}`;
     if (olderUser.length > 0) {
