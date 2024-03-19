@@ -11,7 +11,17 @@ const pool = postgres({
   //   ssl: 'require',
   //   connection: {
   //     options: `project=${ENDPOINT_ID}`,
-  //   },
+  //   
+//   host: PGHOST,
+//   database: PGDATABASE,
+//   username: PGUSER,
+//   password: PGPASSWORD,
+//   port: 5432,
+//   ssl: 'require',
+//   connection: {
+//     options: `project=${ENDPOINT_ID}`,
+//   },
+
 
   host: "localhost",
   user: "postgres",
