@@ -51,5 +51,5 @@ app.use((err, req, res, next) => {
 
 //404 page
 app.use("*", (req, res) => {
-  res.json({ message: "route not found" });
+  res.status(404).json({ message: "route not found" });
 });
