@@ -5,4 +5,6 @@ module.exports = (status,code,message)=>{
     error.status = status;
     error.code = code;
     error.message = message;
+
+    return error;
 }
