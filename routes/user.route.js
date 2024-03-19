@@ -6,6 +6,6 @@ const validationScheme = require("../middlewares/validation-scheme.js");
 //controllers
 
 router.post("/register", validationScheme, userController.register);
-router.post("/login", validationScheme, userController.login);
+router.post("/login",  userController.login);
 
 module.exports = router;

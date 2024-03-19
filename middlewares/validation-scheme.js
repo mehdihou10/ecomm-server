@@ -18,5 +18,4 @@ module.exports = [
     .notEmpty().withMessage('add your password')
     .isStrongPassword().withMessage('add stronger password'),
 
-
 ]
