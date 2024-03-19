@@ -1,14 +1,16 @@
-const pool = require('../db');
+const pool = require("../db");
+const httpStatus = require('../utils/http.status');
+const createError = require("../utils/create.error")
 
-const getUsers = async(req,res,next)=>{
+const getUsers = async (req, res, next) => {
+  try {
+    const users = await pool`SELECT * FROM users`;
+    res.status(200).json({ status: httpStatus.SUCCESS ,result:users});
+  } catch (error) {
 
-    // const result = await pool`SELECT * FROM ??`;
-
-    res.json({status: "success"})
-
-}
+  }
+};
 
 module.exports = {
-
-    getUsers,
-}
+  getUsers,
+};
