@@ -1,17 +1,18 @@
 const pool = require("../db");
 const httpStatus = require("../utils/http.status");
 const createError = require("../utils/create.error");
-const jwt = require("jsonwebtoken");
+const generateToken = require("../utils/generate.token");
 const bcrypt = require("bcryptjs");
 
 const { validationResult } = require("express-validator");
 
-const register = async (req, res,next) => {
+const register = async (req, res, next) => {
   try {
     const { first_name, last_name, email, password, image } = req.body;
     const errors = validationResult(req);
     if (errors) {
-      return res.status(400).send({ message: errors.array() });
+      const err = createError(httpStatus.FAIL, 400, errors.array());
+      return next(err);
     }
     const olderUser = await pool`select * from users where email=${email}`;
     if (olderUser.length > 0) {
@@ -20,31 +21,45 @@ const register = async (req, res,next) => {
     }
     const hasedPassword = await bcrypt.hash(password, 10);
     await pool`insert into users (first_name,last_name,email,password,image) VALUES(${first_name},${last_name},${email},${hasedPassword},${image})`;
-    const token = jwt.sign({ email }, process.env.JWT_KEY, {
-      expiresIn: "3h",
+    const newUser = await pool`select * from users where email = ${email}`;
+    const token = generateToken({
+      id: newUser[0].id,
+      first_name,
+      last_name,
+      email,
+      image,
     });
-    res.json({ token });
+    res.json({ status: httpStatus.SUCCESS, token });
   } catch (error) {
     console.log("error", error);
-    res.json({ message: "Internal server error" });
+    return next(error);
   }
 };
 
-const login = async (req, res) => {
+const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
     const user = await pool`select * from users where email=${email}`;
     if (user.length === 0) {
-      return res.status(404).json({ error: "no such user" });
+      const error = createError(httpStatus.FAIL, 400, "no such user");
+      return next(error);
     }
     const isValidPassword = await bcrypt.compare(password, user[0].password);
     if (!isValidPassword) {
-      return res.status(404).json({ error: "password incorrect" });
+      const error = createError(httpStatus.FAIL, 400, "Incorrect password");
+      return next(error);
     }
-    res.status(200).json({ user });
+    const token = generateToken({
+      id: user[0].id,
+      first_name: user[0].first_name,
+      last_name: user[0].last_name,
+      image: user[0].image,
+      email: user[0].email,
+    });
+    res.json({ status: httpStatus.SUCCESS, token });
   } catch (error) {
     console.log(error);
-    return res.status(500).json({ error });
+    return next(error);
   }
 };
 
