@@ -10,7 +10,7 @@ const register = async (req, res, next) => {
   try {
     const { first_name, last_name, email, password, image } = req.body;
     const errors = validationResult(req);
-    if (errors) {
+    if (!errors.isEmpty()) {
       const err = createError(httpStatus.FAIL, 400, errors.array());
       return next(err);
     }
