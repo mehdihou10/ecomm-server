@@ -16,7 +16,7 @@ const register = async (req, res, next) => {
     }
     const olderUser = await pool`select * from users where email=${email}`;
     if (olderUser.length > 0) {
-      const error = createError(httpStatus.FAIL, 400, "user already exists");
+      const error = createError(httpStatus.FAIL, 400,  { msg: "no such user" });
       return next(error);
     }
     const hasedPassword = await bcrypt.hash(password, 10);
@@ -46,12 +46,14 @@ const login = async (req, res, next) => {
     }
     const user = await pool`select * from users where email=${email}`;
     if (user.length === 0) {
-      const error = createError(httpStatus.FAIL, 400, "no such user");
+      const error = createError(httpStatus.FAIL, 400, { msg: "no such user" });
       return next(error);
     }
     const isValidPassword = await bcrypt.compare(password, user[0].password);
     if (!isValidPassword) {
-      const error = createError(httpStatus.FAIL, 400, "Incorrect password");
+      const error = createError(httpStatus.FAIL, 400, {
+        msg: "Incorrect password",
+      });
       return next(error);
     }
     const token = generateToken({
