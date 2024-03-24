@@ -29,7 +29,7 @@ module.exports = {
   login: [
     body("email")
       .notEmpty()
-      .withMessage("add a your email")
+      .withMessage("add your email")
       .isEmail()
       .withMessage("add a valid Email Syntax"),
 

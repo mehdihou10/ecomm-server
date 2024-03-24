@@ -39,6 +39,11 @@ const register = async (req, res, next) => {
 const login = async (req, res, next) => {
   try {
     const { email, password } = req.body;
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      const err = createError(httpStatus.FAIL, 400, errors.array());
+      return next(err);
+    }
     const user = await pool`select * from users where email=${email}`;
     if (user.length === 0) {
       const error = createError(httpStatus.FAIL, 400, "no such user");
