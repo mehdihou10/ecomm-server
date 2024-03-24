@@ -9,11 +9,13 @@ const {validationResult} = require('express-validator');
 
 const generateToken = require('../utils/generate.token');
 
+const verifyEmail = require('../utils/send.email');
+
 //controllers
 
 const addVendor = async(req,res,next)=>{
 
-    const {first_name,last_name,email,password,image,phone_number} = req.body;
+    const {first_name,last_name,email,password,image,phone_number,is_email_verification} = req.body;
 
     const errors = validationResult(req);
 
@@ -34,7 +36,15 @@ const addVendor = async(req,res,next)=>{
 
     const hashed_password = await bcrypt.hash(password,10);
 
-    try{
+    if(is_email_verification){
+
+        verifyEmail('<h1>Hello world</h1>',email,"verification code");
+
+        res.json({status: "ok"})
+
+    } else{
+        
+        try{
 
         await pool`INSERT INTO vendor (first_name,last_name,email,password,image,phone_number) 
         VALUES (${first_name},${last_name},${email},${hashed_password},${image},${phone_number})`;
@@ -50,6 +60,8 @@ const addVendor = async(req,res,next)=>{
 
         next(err);
     }
+
+}
 
 
 }
