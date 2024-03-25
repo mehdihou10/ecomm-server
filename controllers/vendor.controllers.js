@@ -40,7 +40,7 @@ const addVendor = async(req,res,next)=>{
 
         verifyEmail('<h1>Hello world</h1>',email,"verification code");
 
-        res.json({status: "ok"})
+        res.json({status: httpStatus.SUCCESS})
 
     } else{
         
