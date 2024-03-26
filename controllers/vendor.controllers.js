@@ -15,7 +15,8 @@ const verifyEmail = require('../utils/send.email');
 
 const addVendor = async(req,res,next)=>{
 
-    const {first_name,last_name,email,password,image,phone_number,is_email_verification} = req.body;
+    const {first_name,last_name,email,password,image,phone_number,email_verification} = req.body;
+
 
     const errors = validationResult(req);
 
@@ -36,9 +37,14 @@ const addVendor = async(req,res,next)=>{
 
     const hashed_password = await bcrypt.hash(password,10);
 
-    if(is_email_verification){
+    if(email_verification){
 
-        verifyEmail('<h1>Hello world</h1>',email,"verification code");
+        const html = `
+        <h4>Please copy this code:</h4>
+        <code><h4 style='background-color: #eee; padding: 10px 20px;font-size: 20px; width: fit-content'>${email_verification}</h4></code>
+        `
+
+        verifyEmail(html,email,"verification code");
 
         res.json({status: httpStatus.SUCCESS})
 
