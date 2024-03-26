@@ -23,16 +23,15 @@ const login = async (req, res, next) => {
           { msg: "incorrect password" },
         ]);
         return next(error);
-      }else{
-
-          const token = generateToken({
-            id: users[i].id,
-            first_name: users[i].first_name,
-            last_name: users[i].last_name,
-            image: users[i].image,
-            email: users[i].email,
-          });
-          return res.json({ status: httpStatus.SUCCESS, token });
+      } else {
+        const token = generateToken({
+          id: users[i].id,
+          first_name: users[i].first_name,
+          last_name: users[i].last_name,
+          image: users[i].image,
+          email: users[i].email,
+        });
+        return res.json({ status: httpStatus.SUCCESS, token });
       }
     }
   }
@@ -45,6 +44,11 @@ const login = async (req, res, next) => {
           { msg: "incorrect password" },
         ]);
         return next(error);
+      } else if (vendors[i].status === "pending") {
+        const error = createError(httpStatus.FAIL, 400, [
+          { msg: "Your account is pending" },
+        ]);
+        return next(error);
       } else {
         const token = generateToken({
           id: vendors[i].id,
@@ -54,10 +58,11 @@ const login = async (req, res, next) => {
           image: vendors[i].image,
           email: vendors[i].email,
         });
+        return res.json({ status: httpStatus.SUCCESS, token });
       }
-      return res.json({ status: httpStatus.SUCCESS, token });
     }
   }
+
   const error = createError(httpStatus.FAIL, 400, [{ msg: "no such user" }]);
   return next(error);
 };
