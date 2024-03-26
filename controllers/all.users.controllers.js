@@ -3,6 +3,8 @@ const httpStatus = require("../utils/http.status");
 const createError = require("../utils/create.error");
 const generateToken = require("../utils/generate.token");
 const bcrypt = require("bcryptjs");
+const sendEmail = require('../utils/send.email');
+const url = require('../constants/client.url');
 
 const { validationResult } = require("express-validator");
 
@@ -67,4 +69,41 @@ const login = async (req, res, next) => {
   return next(error);
 };
 
-module.exports = { login };
+const resetPassword = async (req,res,next)=>{
+
+  const {email} = req.body;
+
+  let type;
+  let userObj;
+
+  const clientRes = await pool`SELECT id,email FROM users WHERE email=${email}`;
+  const vendorRes = await pool`SELECT id,email FROM vendor WHERE email=${email}`;
+
+  if(clientRes.length > 0){
+
+    type = "client";
+    userObj = clientRes[0];
+
+  } else if(vendorRes.length > 0){
+
+    type = "vendor";
+    userObj = vendorRes[0];
+
+  } else{
+
+    const error = createError(httpStatus.FAIL,400,"email not found");
+    return next(error);
+  }
+
+  const token = generateToken({id: userObj.id, email: userObj.email})
+
+  res.json(token);
+
+  // const html = `
+  // <p>Follow this link to reset your password for your ${email} account.</p>
+  // <a>${url}/reset_passwword</a>
+  
+  // `
+}
+
+module.exports = { login,resetPassword };
