@@ -36,10 +36,12 @@ getPgVersion();
 const userRouter = require("./routes/user.route");
 const vendorRouter = require("./routes/vendor.route");
 const allUsersRouter = require('./routes/all.users.route');
+const decodeRouter = require('./routes/decode.route');
 
 app.use("/api/users", userRouter);
 app.use("/api/vendors", vendorRouter);
 app.use("/api/all",allUsersRouter);
+app.use("/api/decode",decodeRouter);
 
 //error handeler
 app.use((err, req, res, next) => {
