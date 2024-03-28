@@ -7,8 +7,7 @@ const sendEmail = require("../utils/send.email");
 const url = require("../constants/client.url");
 
 const { validationResult } = require("express-validator");
-const jwt = require('jsonwebtoken');
-
+const jwt = require("jsonwebtoken");
 
 const login = async (req, res, next) => {
   const { email, password } = req.body;
@@ -29,6 +28,7 @@ const login = async (req, res, next) => {
         return next(error);
       } else {
         const token = generateToken({
+          type: "client",
           id: users[i].id,
           first_name: users[i].first_name,
           last_name: users[i].last_name,
@@ -55,6 +55,7 @@ const login = async (req, res, next) => {
         return next(error);
       } else {
         const token = generateToken({
+          type: "vendor",
           id: vendors[i].id,
           first_name: vendors[i].first_name,
           last_name: vendors[i].last_name,
@@ -92,74 +93,60 @@ const sendPasswordInput = async (req, res, next) => {
     return next(error);
   }
 
-  
-  const token = jwt.sign({ id: userObj.id, email: userObj.email, type },process.env.JWT_KEY,{expiresIn: "5min"})
+  const token = jwt.sign(
+    { id: userObj.id, email: userObj.email, type },
+    process.env.JWT_KEY,
+    { expiresIn: "5min" }
+  );
 
   const html = `
   <p>Follow this link to reset your password for your ${email} account.</p>
   <a href=${url}/reset_password/${token}>${url}/reset_passwword/${token}</a>
   <p style='font-size: 14px; font-weight: bold; font-style: italic'>(this link will expire in 5 minutes)</p>
-  `
+  `;
 
-  sendEmail(html,email,"reset password")
-  res.json({status: httpStatus.SUCCESS});
-
+  sendEmail(html, email, "reset password");
+  res.json({ status: httpStatus.SUCCESS });
 };
 
-const verifyEmail = (req,res,next)=>{
-
+const verifyEmail = (req, res, next) => {
   const errors = validationResult(req);
 
-  if(!errors.isEmpty()){
-
-    const error = createError(httpStatus.FAIL,400,errors.array());
+  if (!errors.isEmpty()) {
+    const error = createError(httpStatus.FAIL, 400, errors.array());
     return next(error);
-
-  } else{
-
-    return res.json({status: httpStatus.SUCCESS})
+  } else {
+    return res.json({ status: httpStatus.SUCCESS });
   }
-}
+};
 
-const resetPassword = async (req,res,next)=>{
-
-  const {id,email,type,new_password} = req.body;
+const resetPassword = async (req, res, next) => {
+  const { id, email, type, new_password } = req.body;
 
   const errors = validationResult(req);
 
-  if(!errors.isEmpty()){
-
-    const err = createError(httpStatus.FAIL,400,errors.array());
+  if (!errors.isEmpty()) {
+    const err = createError(httpStatus.FAIL, 400, errors.array());
     return next(err);
   }
 
-  const hashed_password = await bcrypt.hash(new_password,10);
+  const hashed_password = await bcrypt.hash(new_password, 10);
 
-
-  try{
-
-
-    if(type === "client"){
-
+  try {
+    if (type === "client") {
       await pool`UPDATE users 
               SET password=${hashed_password}
               WHERE id=${id} AND email=${email}`;
-
-    } else if(type === "vendor"){
-
+    } else if (type === "vendor") {
       await pool`UPDATE vendor
               SET password=${hashed_password}
               WHERE id=${id} AND email=${email}`;
     }
 
-    res.json({status: httpStatus.SUCCESS})    
-    
-  } catch(err){
-
+    res.json({ status: httpStatus.SUCCESS });
+  } catch (err) {
     next(err);
   }
-    
-}
+};
 
-
-module.exports = { login, sendPasswordInput,verifyEmail,resetPassword };
+module.exports = { login, sendPasswordInput, verifyEmail, resetPassword };
