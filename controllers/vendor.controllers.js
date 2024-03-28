@@ -35,6 +35,14 @@ const addVendor = async(req,res,next)=>{
         return res.json({status: httpStatus.FAIL, message: [{msg: "vendor already registered"}]})
     }
 
+    const oldUser = await pool`SELECT COUNT(*) FROM users WHERE email=${email}`;
+
+    if(oldUser[0].count > 0){
+
+        return res.json({status: httpStatus.FAIL, message: [{msg: "account already found"}]})
+
+    }
+
     const hashed_password = await bcrypt.hash(password,10);
 
     if(email_verification){
@@ -57,7 +65,7 @@ const addVendor = async(req,res,next)=>{
 
         const userRes = await pool`SELECT id FROM vendor WHERE email=${email}`;
 
-        const token = generateToken({id: userRes[0].id,first_name,last_name,email,image,phone_number})
+        const token = generateToken({id: userRes[0].id,first_name,last_name,email,image,phone_number, type: "vendor"})
 
         res.json({status: httpStatus.SUCCESS, token})
 
@@ -72,46 +80,8 @@ const addVendor = async(req,res,next)=>{
 
 }
 
-const loginVendor = async(req,res,next)=>{
-
-    const {email,password} = req.body;
-
-    const errors = validationResult(req);
-
-    if(!errors.isEmpty()){
-
-        const err = createError(httpStatus.FAIL,400,errors.array());
-
-        return next(err);
-    }
-
-    const vendor = await pool`SELECT * FROM vendor WHERE email=${email}`;
-
-    if(vendor.length === 0){
-
-        const err = createError(httpStatus.FAIL,404,'vendor not found')
-
-        return next(err);
-    }
-
-    const isPasswordTrue = await bcrypt.compare(password,vendor[0].password);
-
-    if(!isPasswordTrue){
-
-        const err = createError(httpStatus.FAIL,400,'incorrect password');
-
-        return next(err);
-    }
-
-    const token = generateToken({id: vendor[0].id,first_name: vendor[0].first_name,last_name: vendor[0].last_name ,email: vendor[0].email,image: vendor[0].image,phone_number: vendor[0].phone_number})
-
-
-    res.json({status: "success",token})
-}
-
 
 module.exports = {
 
     addVendor,
-    loginVendor
 }
