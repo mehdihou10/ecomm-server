@@ -7,10 +7,12 @@ const allUsersController = require("../controllers/all.users.controllers");
 const validationScheme = require("../middlewares/verify.user.imput");
 const validateEmail = require('../middlewares/verify.reset.password.email');
 const validatePassword = require('../middlewares/verify.reset.password.input');
+const validateUpdate = require('../middlewares/verify.all.users.update');
 
 router.post("/login", validationScheme.login, allUsersController.login);
 router.post("/send_email",allUsersController.sendPasswordInput);
 router.post("/verify_email",validateEmail,allUsersController.verifyEmail);
 router.post("/reset_password",validatePassword,allUsersController.resetPassword);
+router.put("/update/:userId",validateUpdate,allUsersController.updateUser);
 
 module.exports = router;

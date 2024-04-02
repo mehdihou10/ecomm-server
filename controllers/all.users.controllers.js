@@ -149,4 +149,49 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
-module.exports = { login, sendPasswordInput, verifyEmail, resetPassword };
+const updateUser = async (req,res,next)=>{
+
+  const {userId} = req.params;
+  const {first_name,last_name,image,type} = req.body;
+
+  const errors = validationResult(req);
+
+  if(!errors.isEmpty()){
+
+    const error = createError(httpStatus.FAIL,400,errors.array());
+    return next(error);
+
+  }
+
+  try{
+
+    if(type === "client"){
+
+      await pool`UPDATE users
+                 SET first_name=${first_name},
+                 last_name=${last_name},
+                 image=${image}
+                 WHERE id=${userId} `;
+      
+      
+     } else if(type === "vendor"){
+
+      await pool`UPDATE vendor
+                 SET first_name=${first_name},
+                 last_name=${last_name},
+                 image=${image}
+                 WHERE id=${userId} `;
+
+     }
+                
+      res.json({status: httpStatus.SUCCESS})           
+
+  } catch(err){
+
+    next(err);
+  }
+
+
+}
+
+module.exports = { login, sendPasswordInput, verifyEmail, resetPassword, updateUser };
