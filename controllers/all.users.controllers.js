@@ -149,49 +149,61 @@ const resetPassword = async (req, res, next) => {
   }
 };
 
-const updateUser = async (req,res,next)=>{
-
-  const {userId} = req.params;
-  const {first_name,last_name,image,type} = req.body;
+const updateUser = async (req, res, next) => {
+  const { userId } = req.params;
+  const { first_name, last_name, email, phone_number, image, type } = req.body;
 
   const errors = validationResult(req);
 
-  if(!errors.isEmpty()){
-
-    const error = createError(httpStatus.FAIL,400,errors.array());
+  if (!errors.isEmpty()) {
+    const error = createError(httpStatus.FAIL, 400, errors.array());
     return next(error);
-
   }
 
-  try{
-
-    if(type === "client"){
-
+  try {
+    if (type === "client") {
       await pool`UPDATE users
                  SET first_name=${first_name},
                  last_name=${last_name},
                  image=${image}
                  WHERE id=${userId} `;
-      
-      
-     } else if(type === "vendor"){
-
+      const token = generateToken({
+        type,
+        id: userId,
+        first_name,
+        last_name,
+        image,
+        email,
+      });
+      return res.json({ status: httpStatus.SUCCESS, token });
+    } else if (type === "vendor") {
       await pool`UPDATE vendor
                  SET first_name=${first_name},
                  last_name=${last_name},
                  image=${image}
                  WHERE id=${userId} `;
+      const token = generateToken({
+        type,
+        id: userId,
+        first_name,
+        last_name,
+        phone_number,
+        image,
+        email,
+      });
+      return res.json({ status: httpStatus.SUCCESS, token });
+    }
 
-     }
-                
-      res.json({status: httpStatus.SUCCESS})           
-
-  } catch(err){
-
+    res.json({ status: httpStatus.SUCCESS });
+  } catch (err) {
     next(err);
   }
+};
 
-
-}
-
-module.exports = { login, sendPasswordInput, verifyEmail, resetPassword, updateUser };
+module.exports = {
+  login,
+  sendPasswordInput,
+  verifyEmail,
+  resetPassword,
+  updateUser,
+};
