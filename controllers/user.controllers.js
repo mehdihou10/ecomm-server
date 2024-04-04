@@ -64,6 +64,26 @@ const register = async (req, res, next) => {
   }
 };
 
+const updateUser = async (req, res, next) => {
+  const { userId } = req.params;
+  const { first_name, last_name, email, image, type } = req.body;
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    const err = createError(httpStatus.FAIL, 400, errors.array());
+    return next(err);
+  }
+      const token = generateToken({
+        type,
+        id: userId,
+        first_name,
+        last_name,
+        image,
+        email,
+      });
+      return res.json({ status: httpStatus.SUCCESS, token });
+    }
+
 module.exports = {
+  updateUser,
   register,
 };

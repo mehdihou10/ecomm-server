@@ -13,6 +13,6 @@ router.post("/login", validationScheme.login, allUsersController.login);
 router.post("/send_email",allUsersController.sendPasswordInput);
 router.post("/verify_email",validateEmail,allUsersController.verifyEmail);
 router.post("/reset_password",validatePassword,allUsersController.resetPassword);
-router.put("/update/:userId",validateUpdate,allUsersController.updateUser);
+
 
 module.exports = router;
