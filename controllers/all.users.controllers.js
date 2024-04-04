@@ -152,7 +152,6 @@ const resetPassword = async (req, res, next) => {
 const updateUser = async (req, res, next) => {
   const { userId } = req.params;
   const { first_name, last_name, email, phone_number, image, type } = req.body;
-
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
@@ -177,10 +176,17 @@ const updateUser = async (req, res, next) => {
       });
       return res.json({ status: httpStatus.SUCCESS, token });
     } else if (type === "vendor") {
+      const phoneNumberRegex =
+        "/^d{10}$|^(+d{1,2}s)?(?d{3})?[s.-]?d{3}[s.-]?d{4}$/";
+      if (phoneNumberRegex.test(req.body.phone_number) === false) {
+        const error = createError(httpStatus.FAIL, 400, "Invalid Phone Number");
+        return next(error);
+      }
       await pool`UPDATE vendor
                  SET first_name=${first_name},
                  last_name=${last_name},
                  image=${image}
+                 phone_number=${req.body.phone_number}
                  WHERE id=${userId} `;
       const token = generateToken({
         type,
