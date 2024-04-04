@@ -177,7 +177,7 @@ const updateUser = async (req, res, next) => {
       return res.json({ status: httpStatus.SUCCESS, token });
     } else if (type === "vendor") {
       const phoneNumberRegex =
-        /^d{10}$|^(+d{1,2}s)?(?d{3})?[s.-]?d{3}[s.-]?d{4}$/ig;
+        "/^d{10}$|^(+d{1,2}s)?(?d{3})?[s.-]?d{3}[s.-]?d{4}$/";
       if (phoneNumberRegex.test(req.body.phone_number) === false) {
         const error = createError(httpStatus.FAIL, 400, "Invalid Phone Number");
         return next(error);
