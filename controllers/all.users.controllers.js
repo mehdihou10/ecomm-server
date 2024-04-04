@@ -151,7 +151,7 @@ const resetPassword = async (req, res, next) => {
 
 const updateUser = async (req, res, next) => {
   const { userId } = req.params;
-  const { first_name, last_name, email, phone_number, image, type } = req.body;
+  const { first_name, last_name, email, image, type } = req.body;
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
