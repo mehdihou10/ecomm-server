@@ -49,7 +49,7 @@ const register = async (req, res, next) => {
       await pool`insert into users (first_name,last_name,email,password,image) VALUES(${first_name},${last_name},${email},${hasedPassword},${image})`;
       const newUser = await pool`select * from users where email = ${email}`;
       const token = generateToken({
-        type:"client" ,
+        type: "client",
         id: newUser[0].id,
         first_name,
         last_name,
@@ -66,22 +66,32 @@ const register = async (req, res, next) => {
 
 const updateUser = async (req, res, next) => {
   const { userId } = req.params;
-  const { first_name, last_name, email, image, type } = req.body;
+  const { first_name, last_name, email, image } = req.body;
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const err = createError(httpStatus.FAIL, 400, errors.array());
     return next(err);
   }
-      const token = generateToken({
-        type,
-        id: userId,
-        first_name,
-        last_name,
-        image,
-        email,
-      });
-      return res.json({ status: httpStatus.SUCCESS, token });
-    }
+  try {
+    await pool`update users 
+    SET first_name=${first_name},
+    last_name=${last_name},
+    image=${image}
+    where id =${userId}
+    `;
+    const token = generateToken({
+      type: "user",
+      id: userId,
+      first_name,
+      last_name,
+      image,
+      email,
+    });
+    return res.json({ status: httpStatus.SUCCESS, token });
+  } catch (error) {
+    return next(error);
+  }
+};
 
 module.exports = {
   updateUser,

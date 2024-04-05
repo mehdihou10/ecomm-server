@@ -116,7 +116,7 @@ const updateVendor = async (req, res, next) => {
   res.json({ status: httpStatus.SUCCESS, token });
 
   } catch(err){
-    next(err);
+    return next(err);
   }
  
 };
