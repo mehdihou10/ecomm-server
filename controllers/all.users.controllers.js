@@ -35,7 +35,7 @@ const login = async (req, res, next) => {
           image: users[i].image,
           email: users[i].email,
         });
-        return res.json({ status: httpStatus.SUCCESS, token });
+        return res.json({ status: httpStatus.SUCCESS, token, type: "client" });
       }
     }
   }
@@ -63,7 +63,7 @@ const login = async (req, res, next) => {
           image: vendors[i].image,
           email: vendors[i].email,
         });
-        return res.json({ status: httpStatus.SUCCESS, token });
+        return res.json({ status: httpStatus.SUCCESS, token, type: "vendor" });
       }
     }
   }

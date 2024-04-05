@@ -88,22 +88,37 @@ const addVendor = async (req, res, next) => {
 
 const updateVendor = async (req, res, next) => {
   const { userId } = req.params;
-  const { first_name, last_name, email, phone_number, image, type } = req.body;
+  const { first_name, last_name, email, phone_number, image } = req.body;
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const err = createError(httpStatus.FAIL, 400, errors.array());
     return next(err);
   }
-  const token = generateToken({
-    type,
+
+  try{
+    await pool`UPDATE vendor
+                 SET first_name=${first_name},
+                 last_name=${last_name},
+                 image=${image},
+                 phone_number=${phone_number}
+                 WHERE id=${userId} `;
+
+     const token = generateToken({
+    type: "vendor",
     id: userId,
     first_name,
     last_name,
     phone_number,
     image,
     email,
-  });
-  return res.json({ status: httpStatus.SUCCESS, token });
+  });        
+  
+  res.json({ status: httpStatus.SUCCESS, token });
+
+  } catch(err){
+    next(err);
+  }
+ 
 };
 
 module.exports = {
