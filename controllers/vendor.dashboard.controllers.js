@@ -7,10 +7,10 @@ const getProducts = async (req, res, next) => {
   const vendorId = req.params.id;
   try {
     const prodcuts =
-      await pool`select * from product where vendor_id=${vendorId}`;
-    if (prodcuts.length === 0) {
-      return res.json({ status: httpStatus.SUCCESS, data: "no such products" });
-    }
+      await pool`SELECT P.*,C.name AS cat_name
+                 FROM product P,category C
+                 WHERE P.category_id=C.id
+                 AND P.vendor_id=${vendorId}`;
     return res.json({ status: httpStatus.SUCCESS, data: prodcuts });
   } catch (error) {
     return next(error);
