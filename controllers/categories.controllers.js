@@ -15,5 +15,16 @@ const getCategories = async (req,res,next)=>{
     }
 }
 
+const getCategory = async (req,res,next)=>{
+    const {categoryId} = req.params;
 
-module.exports = {getCategories}
+    try{
+        const category = await pool `select name from category where id=${categoryId}`;
+        res.json({status:httpStatus.SUCCESS,category})
+    }catch(error){
+        return next(error);
+    }
+}
+
+
+module.exports = {getCategories,getCategory}
