@@ -8,7 +8,7 @@ module.exports = [
 
         body("description")
         .notEmpty().withMessage("add a description")
-        .isLength({min: 100,max: 200}).withMessage('add a valid description'),
+        .isLength({min: 50,max: 100}).withMessage('add a valid description'),
 
         body("image")
         .notEmpty().withMessage("add a product image"),

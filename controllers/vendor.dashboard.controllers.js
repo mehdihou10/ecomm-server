@@ -2,6 +2,8 @@ const pool = require("../db");
 const httpStatus = require("../utils/http.status");
 const createError = require("../utils/create.error");
 const { validationResult } = require("express-validator");
+const jwt = require('jsonwebtoken');
+
 
 const getProducts = async (req, res, next) => {
   const vendorId = req.params.id;
@@ -16,6 +18,36 @@ const getProducts = async (req, res, next) => {
     return next(error);
   }
 };
+
+const getProduct = async (req,res,next)=>{
+
+  const {productId} = req.params;
+
+
+  const headers = req.headers['Authorization'] || req.headers['authorization'];
+
+  const token = headers.split(' ')[1];
+
+  if(!token){
+    const error = createError(httpStatus.FAIL,400,"token required");
+    return next(error);
+  }
+
+  const vendorId = jwt.decode(token).id;
+
+
+  try{
+    const products = await pool`SELECT * FROM product WHERE id=${productId} AND vendor_id=${vendorId}`;
+
+    if(products.length === 0){
+      const error = createError(httpStatus.FAIL,400,"product not found");
+      return next(error);
+    }
+    res.json({status: httpStatus.SUCCESS, product: products[0]})
+  } catch(err){
+    next(err);
+  }
+}
 
 const addProduct = async (req, res, next) => {
   const { name, description, vendor_id, category_id, image, price, brand } =
@@ -110,4 +142,4 @@ const deleteProduct = async (req, res, next) => {
   }
 };
 
-module.exports = { updateProduct, deleteProduct, getProducts, addProduct };
+module.exports = { updateProduct, deleteProduct, getProducts,getProduct, addProduct };
