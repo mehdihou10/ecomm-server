@@ -149,9 +149,32 @@ const deleteProduct = async (req, res, next) => {
 const getOrders = async (req, res, next) => {
   try {
     const orders =
-      await pool`select U.first_name,U.last_name,P.name,qte from "order" O,product P ,users U,vendor V where O.product_id = P.id and V.id = P.vendor_id and U.id = O.user_id `;
+      await pool`select U.id as user_id,P.id as product_id,U.first_name,U.last_name,P.name,qte,P.image from "order" O,product P ,users U,vendor V where O.product_id = P.id and V.id = P.vendor_id and U.id = O.user_id `;
     return res.json({ status: httpStatus.SUCCESS, data: orders });
   } catch (error) {
+    return next(error);
+  }
+};
+
+const deleteOrder = async (req, res, next) => {
+  productId = req.params.id;
+  userId = req.body.id;
+  try {
+    const order =
+      await pool`select * from "order" where user_id = ${userId} and product_id = ${productId}`;
+    if (order.length === 0) {
+      const error = createError(httpStatus.FAIL, 400, [
+        { msg: "product not found" },
+      ]);
+      return next(error);
+    }
+    await pool`delete from "order" where product_id = ${productId} and user_id = ${userId} `;
+    return res.json({
+      status: httpStatus.SUCCESS,
+      message: "deleted successfully",
+    });
+  } catch (error) {
+    console.log(error);
     return next(error);
   }
 };
@@ -163,4 +186,5 @@ module.exports = {
   getProduct,
   addProduct,
   getOrders,
+  deleteOrder,
 };

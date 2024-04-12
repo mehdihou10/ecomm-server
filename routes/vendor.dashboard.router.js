@@ -17,4 +17,5 @@ router.put(
 );
 router.delete("/:productId", vendorDashboardControllers.deleteProduct);
 router.get("/orders/show",vendorDashboardControllers.getOrders)
+router.delete("/orders/show/:id",vendorDashboardControllers.deleteOrder)
 module.exports = router;
