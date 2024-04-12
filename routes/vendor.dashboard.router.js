@@ -5,6 +5,8 @@ const router = express.Router();
 const validationDashboard = require("../middlewares/verify.vendor.dashboard");
 const vendorDashboardControllers = require("../controllers/vendor.dashboard.controllers");
 
+
+
 router.get("/:id", validationDashboard, vendorDashboardControllers.getProducts);
 router.get('/product/:productId',vendorDashboardControllers.getProduct);
 router.post("/add", validationDashboard, vendorDashboardControllers.addProduct);
@@ -14,4 +16,5 @@ router.put(
   vendorDashboardControllers.updateProduct
 );
 router.delete("/:productId", vendorDashboardControllers.deleteProduct);
+router.get("/orders/show",vendorDashboardControllers.getOrders)
 module.exports = router;
