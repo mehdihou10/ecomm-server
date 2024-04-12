@@ -46,8 +46,16 @@ const getProduct = async (req, res, next) => {
 };
 
 const addProduct = async (req, res, next) => {
-  const { name, description, vendor_id, category_id, image, price, brand,date } =
-    req.body;
+  const {
+    name,
+    description,
+    vendor_id,
+    category_id,
+    image,
+    price,
+    brand,
+    date,
+  } = req.body;
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const err = createError(httpStatus.FAIL, 400, errors.array());
@@ -139,11 +147,10 @@ const deleteProduct = async (req, res, next) => {
 };
 
 const getOrders = async (req, res, next) => {
-  
   try {
     const orders =
-      await pool`select first_name,last_name,name from "order" O,product P ,users U,vednor V where O.product_id = P.id V.id = P.vendor_id and U.id = O.user_id `;
-    return res.json({ status: httpStatus.SUCCESS,data: orders });
+      await pool`select U.first_name,U.last_name,P.name,qte from "order" O,product P ,users U,vendor V where O.product_id = P.id and V.id = P.vendor_id and U.id = O.user_id `;
+    return res.json({ status: httpStatus.SUCCESS, data: orders });
   } catch (error) {
     return next(error);
   }
