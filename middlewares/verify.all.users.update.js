@@ -32,5 +32,9 @@ module.exports = {
       .withMessage("Phone number is required")
       .isLength({ min: 8, max: 10 })
       .withMessage("Enter a valid phone number"),
+
+      body('city')
+      .notEmpty()
+      .withMessage('add your city')
   ],
 };

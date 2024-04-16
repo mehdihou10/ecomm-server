@@ -60,6 +60,7 @@ const login = async (req, res, next) => {
           first_name: vendors[i].first_name,
           last_name: vendors[i].last_name,
           phone_number: vendors[i].phone_number,
+          city: vendors[i].city,
           image: vendors[i].image,
           email: vendors[i].email,
         });

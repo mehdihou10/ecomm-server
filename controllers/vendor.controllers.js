@@ -9,7 +9,7 @@ const { validationResult } = require("express-validator");
 
 const generateToken = require("../utils/generate.token");
 
-const verifyEmail = require("../utils/send.email");
+const sendEmail = require("../utils/send.email");
 
 //controllers
 
@@ -21,6 +21,7 @@ const addVendor = async (req, res, next) => {
     password,
     image,
     phone_number,
+    city,
     email_verification,
   } = req.body;
 
@@ -59,13 +60,13 @@ const addVendor = async (req, res, next) => {
         <code><h4 style='background-color: #eee; padding: 10px 20px;font-size: 20px; width: fit-content'>${email_verification}</h4></code>
         `;
 
-    verifyEmail(html, email, "verification code");
+    sendEmail(html, email, "verification code");
 
     res.json({ status: httpStatus.SUCCESS });
   } else {
     try {
-      await pool`INSERT INTO vendor (first_name,last_name,email,password,image,phone_number) 
-        VALUES (${first_name},${last_name},${email},${hashed_password},${image},${phone_number})`;
+      await pool`INSERT INTO vendor (first_name,last_name,email,password,image,phone_number,city) 
+        VALUES (${first_name},${last_name},${email},${hashed_password},${image},${phone_number},${city})`;
 
       const userRes = await pool`SELECT id FROM vendor WHERE email=${email}`;
 
@@ -76,8 +77,16 @@ const addVendor = async (req, res, next) => {
         email,
         image,
         phone_number,
+        city,
         type: "vendor",
       });
+
+      const html = `
+      Hi <span style='font-weight: bold; font-style: italic'>${first_name}</span>,
+      <p>You are successfully registered,your must wait now for admin confirmation</p>
+      `;
+
+      sendEmail(html,email,"Your Account is Pending")
 
       res.json({ status: httpStatus.SUCCESS, token });
     } catch (err) {
@@ -88,7 +97,7 @@ const addVendor = async (req, res, next) => {
 
 const updateVendor = async (req, res, next) => {
   const { userId } = req.params;
-  const { first_name, last_name, email, phone_number, image } = req.body;
+  const { first_name, last_name, email, phone_number,city, image } = req.body;
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const err = createError(httpStatus.FAIL, 400, errors.array());
@@ -100,7 +109,8 @@ const updateVendor = async (req, res, next) => {
                  SET first_name=${first_name},
                  last_name=${last_name},
                  image=${image},
-                 phone_number=${phone_number}
+                 phone_number=${phone_number},
+                 city=${city}
                  WHERE id=${userId} `;
 
      const token = generateToken({
@@ -109,6 +119,7 @@ const updateVendor = async (req, res, next) => {
     first_name,
     last_name,
     phone_number,
+    city,
     image,
     email,
   });        

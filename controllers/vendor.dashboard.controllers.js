@@ -3,6 +3,8 @@ const httpStatus = require("../utils/http.status");
 const createError = require("../utils/create.error");
 const { validationResult } = require("express-validator");
 const jwt = require("jsonwebtoken");
+const sendEmail = require('../utils/send.email');
+
 
 const getProducts = async (req, res, next) => {
   const vendorId = req.params.id;
@@ -54,6 +56,7 @@ const addProduct = async (req, res, next) => {
     image,
     price,
     brand,
+    qte,
     date,
   } = req.body;
   const errors = validationResult(req);
@@ -63,7 +66,7 @@ const addProduct = async (req, res, next) => {
   }
 
   try {
-    await pool`insert into product (name,description,category_id,vendor_id,image,price,brand,date) values(${name},${description},${category_id},${vendor_id},${image},${price},${brand},${date})`;
+    await pool`insert into product (name,description,category_id,vendor_id,image,price,brand,qte,date) values(${name},${description},${category_id},${vendor_id},${image},${price},${brand},${qte},${date})`;
     res.json({ status: httpStatus.SUCCESS });
   } catch (error) {
     return next(error);
@@ -98,7 +101,7 @@ const updateProduct = async (req, res, next) => {
     return next(error);
   }
 
-  const { name, description, image, price, category_id, brand } = req.body;
+  const { name, description, image, price, category_id,qte,brand } = req.body;
 
   try {
     await pool`UPDATE product
@@ -107,7 +110,8 @@ const updateProduct = async (req, res, next) => {
                    image=${image},
                    price=${price},
                    category_id=${category_id},
-                   brand=${brand}
+                   brand=${brand},
+                   qte=${qte}
                    WHERE id=${productId}`;
 
     res.json({ status: httpStatus.SUCCESS });
@@ -149,7 +153,9 @@ const deleteProduct = async (req, res, next) => {
 const getOrders = async (req, res, next) => {
   try {
     const orders =
-      await pool`select U.id as user_id,P.id as product_id,U.first_name,U.last_name,P.name,qte,P.image from "order" O,product P ,users U,vendor V where O.product_id = P.id and V.id = P.vendor_id and U.id = O.user_id `;
+      await pool`select O.id, U.id as user_id,P.id as product_id,U.first_name,U.last_name,P.name,O.user_city,O.user_phone_number,O.qte,P.image
+       from "order" O,product P ,users U,vendor V
+        where O.product_id = P.id and V.id = P.vendor_id and U.id = O.user_id `;
     return res.json({ status: httpStatus.SUCCESS, data: orders });
   } catch (error) {
     return next(error);
@@ -179,6 +185,68 @@ const deleteOrder = async (req, res, next) => {
   }
 };
 
+const acceptOrder = async (req,res,next)=>{
+
+  const {id,user_id,product_id,qte,date} = req.body;
+
+  try{
+
+    await pool`UPDATE product SET orders=orders+1,qte=qte-${qte} WHERE id=${product_id}`;
+
+    await pool`INSERT INTO history (user_id,product_id,qte,date) VALUES(${user_id},${product_id},${qte},${date})`;
+    await pool`DELETE FROM "order" WHERE id=${id}`;
+
+    const userData = await pool`SELECT * FROM users WHERE id=${user_id}`;
+    const vendorData = await pool`SELECT V.* FROM product P,vendor V WHERE P.vendor_id=V.id AND P.id=${product_id}`;
+
+    const html = `
+    <div>
+    Hi, <span style='font-weight: bold; font-style: italic'>${userData[0].first_name}</span>
+    </div>
+
+    <p>
+    We emailed you to confirm that your order has been successfully sent to
+    <span style='font-weight: bold; font-style: italic'>${vendorData[0].first_name} ${vendorData[0].last_name}</span>
+    </p>
+    phone number:<a href="tel:${vendorData[0].phone_number}">${vendorData[0].phone_number}</a>
+    `;
+
+    sendEmail(html,userData[0].email,"Order Successfully Sent!");
+
+    res.json({status: httpStatus.SUCCESS});
+
+  } catch(err){
+    next(err)
+  }
+}
+
+const getHistory = async (req,res,next)=>{
+
+   const headers = req.headers["Authorization"] || req.headers["authorization"];
+
+  const token = headers.split(" ")[1];
+
+  if (!token) {
+    const error = createError(httpStatus.FAIL, 400, "token required");
+    return next(error);
+  }
+
+  const vendorId = jwt.decode(token).id;
+
+
+  try{
+
+    const history = await pool`SELECT P.name,P.image,U.first_name,U.last_name,H.date,H.qte
+                               FROM history H,product P,users U
+                               WHERE H.product_id=P.id AND H.user_id=U.id AND P.vendor_id=${vendorId}`;
+
+    res.json({status: httpStatus.SUCCESS,data: history})
+
+  } catch(err){
+    next(err);
+  }
+}
+
 module.exports = {
   updateProduct,
   deleteProduct,
@@ -187,4 +255,6 @@ module.exports = {
   addProduct,
   getOrders,
   deleteOrder,
+  acceptOrder,
+  getHistory
 };

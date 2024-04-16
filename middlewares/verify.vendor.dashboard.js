@@ -23,4 +23,9 @@ module.exports = [
         body("brand")
         .notEmpty().withMessage("add a product brand")
         .isLength({min: 2, max: 50}).withMessage("add a valid brand"),
+
+        body('qte')
+        .notEmpty().withMessage('Please specify product quantity')
+        .isInt({ min: 1 }).withMessage('Please add a valid quantity')
+        
     ]

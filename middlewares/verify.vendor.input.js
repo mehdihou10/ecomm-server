@@ -22,7 +22,10 @@ module.exports = {
     
         body('phone_number')
         .notEmpty().withMessage('please add your phone number')
-        .isMobilePhone().withMessage('please add a valid phone number')
+        .isMobilePhone().withMessage('please add a valid phone number'),
+
+        body("city")
+        .notEmpty().withMessage('Please add your city')
     
         
     ],
