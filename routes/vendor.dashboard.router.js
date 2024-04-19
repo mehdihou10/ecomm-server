@@ -24,4 +24,8 @@ router.post("/orders/accept",vendorDashboardControllers.acceptOrder);
 
 //history
 router.get("/history/show",vendorDashboardControllers.getHistory)
+
+//comments
+router.get("/:productId/comments",vendorDashboardControllers.getComments);
+
 module.exports = router;

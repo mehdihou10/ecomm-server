@@ -247,6 +247,24 @@ const getHistory = async (req,res,next)=>{
   }
 }
 
+const getComments = async (req,res,next)=>{
+
+  const {productId} = req.params;
+
+  try{
+
+    const comments = await pool`SELECT C.value,C.rating,U.first_name,U.last_name,U.image
+                                FROM comments C,users U
+                                WHERE C.user_id=U.id AND C.product_id=${productId}`;
+
+     res.json({status: httpStatus.SUCCESS,comments});
+     
+     
+  } catch(err){
+    next(err)
+  }
+}
+
 module.exports = {
   updateProduct,
   deleteProduct,
@@ -256,5 +274,6 @@ module.exports = {
   getOrders,
   deleteOrder,
   acceptOrder,
-  getHistory
+  getHistory,
+  getComments
 };
