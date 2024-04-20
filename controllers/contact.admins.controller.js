@@ -20,6 +20,7 @@ const sendMessage = async (req, res, next) => {
 
   const { message, date } = req.body;
 
+
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
