@@ -7,6 +7,7 @@ const messageValidation = require('../middlewares/verify.contact.message');
 
 //routes
 router.post("/",messageValidation,contactController.sendMessage);
+router.get("/messages",contactController.getMessages)
 
 
 module.exports = router;
