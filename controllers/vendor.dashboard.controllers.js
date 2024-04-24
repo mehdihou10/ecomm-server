@@ -175,6 +175,7 @@ const deleteOrder = async (req, res, next) => {
       return next(error);
     }
     await pool`delete from "order" where product_id = ${productId} and user_id = ${userId} `;
+    await pool`insert into "rejectedOrders" (user_id,product_id) VALUES(${userId},${productId})`;
     return res.json({
       status: httpStatus.SUCCESS,
       message: "deleted successfully",
@@ -187,13 +188,13 @@ const deleteOrder = async (req, res, next) => {
 
 const acceptOrder = async (req,res,next)=>{
 
-  const {id,user_id,product_id,qte,date} = req.body;
+  const {id,user_id,product_id,qte,date,city} = req.body;
 
   try{
 
-    await pool`UPDATE product SET orders=orders+1,qte=qte-${qte} WHERE id=${product_id}`;
+    await pool`UPDATE product SET qte=qte-${qte} WHERE id=${product_id}`;
 
-    await pool`INSERT INTO history (user_id,product_id,qte,date) VALUES(${user_id},${product_id},${qte},${date})`;
+    await pool`INSERT INTO history (user_id,product_id,qte,date,city) VALUES(${user_id},${product_id},${qte},${date},${city})`;
     await pool`DELETE FROM "order" WHERE id=${id}`;
 
     const userData = await pool`SELECT * FROM users WHERE id=${user_id}`;
@@ -236,7 +237,7 @@ const getHistory = async (req,res,next)=>{
 
   try{
 
-    const history = await pool`SELECT P.name,P.image,U.first_name,U.last_name,H.date,H.qte
+    const history = await pool`SELECT P.name,P.image,U.first_name,U.last_name,H.date,H.qte,H.city
                                FROM history H,product P,users U
                                WHERE H.product_id=P.id AND H.user_id=U.id AND P.vendor_id=${vendorId}`;
 
@@ -265,6 +266,170 @@ const getComments = async (req,res,next)=>{
   }
 }
 
+//main dashboard
+const getStats = async (req,res,next)=>{
+  
+  const headers = req.headers["Authorization"] || req.headers["authorization"];
+
+  const token = headers.split(" ")[1];
+
+  if (!token) {
+    const error = createError(httpStatus.FAIL, 400, "token required");
+    return next(error);
+  }
+
+  const vendorId = jwt.decode(token).id;
+
+  try{
+
+    const productsData = await pool`SELECT COUNT(*) AS products,
+                                   COALESCE(SUM(views), 0) AS views,
+                                   COALESCE(SUM(orders), 0) AS orders
+                                   FROM product
+                                   WHERE vendor_id=${vendorId}`;
+
+
+    const clientsData = await pool`SELECT COUNT(DISTINCT H.user_id) AS clients
+                                   FROM history H,product P
+                                   WHERE H.product_id=P.id AND P.vendor_id=${vendorId}`;   
+
+                             
+                                   
+    const wilayasData = await pool`SELECT city,COUNT(city) AS city_orders
+                                   FROM history H,product P
+                                   WHERE H.product_id=P.id AND P.vendor_id=${vendorId}
+                                   GROUP BY city
+                                   ORDER BY COUNT(city) DESC
+                                   LIMIT 10`;
+
+    const wilayasCount = await pool`SELECT city,COUNT(city) AS city_orders
+                                   FROM history H,product P
+                                   WHERE H.product_id=P.id AND P.vendor_id=${vendorId}
+                                   GROUP BY city
+                                   ORDER BY COUNT(city) DESC`
+
+
+    const ordersAcceptedData = await pool`SELECT COUNT(*) AS accepted_orders
+                                           FROM history H,product P
+                                           WHERE H.product_id=P.id AND P.vendor_id=${vendorId}`;
+                                          
+    const ordersrejectedData = await pool`SELECT COUNT(*) AS rejected_orders
+                                           FROM "rejectedOrders" R,product P
+                                           WHERE R.product_id=P.id AND P.vendor_id=${vendorId}`;    
+                                           
+    
+    
+    
+    const fullData = {
+      productsData: productsData[0],
+      clientsData: clientsData[0].clients,
+      wilayasData,
+      wilayasCount: Object.keys({...wilayasCount}).length,
+      accepted_orders: ordersAcceptedData[0].accepted_orders,
+      rejected_orders: ordersrejectedData[0].rejected_orders,
+      ordersPercentage: Math.ceil(
+        (+ordersAcceptedData[0].accepted_orders
+          /(+ordersAcceptedData[0].accepted_orders+ +ordersrejectedData[0].rejected_orders)
+        )
+         * 100) || 0
+
+    };  
+                                        
+                                           
+    res.json({status: httpStatus.SUCCESS,data: fullData})
+
+  } catch(err){
+    next(err)
+  }
+}
+
+const getCoupons = async(req,res,next)=>{
+
+  const headers = req.headers["Authorization"] || req.headers["authorization"];
+
+  const token = headers.split(" ")[1];
+
+  if (!token) {
+    const error = createError(httpStatus.FAIL, 400, "token required");
+    return next(error);
+  }
+
+  const vendorId = jwt.decode(token).id;
+
+  try{
+
+    const coupons = await pool`SELECT id,coupon FROM coupons WHERE vendor_id=${vendorId}`;
+
+    res.json({status: httpStatus.SUCCESS,coupons});
+
+  } catch(err){
+    next(err)
+  }
+}
+
+const addCoupon = async(req,res,next)=>{
+  
+  const headers = req.headers["Authorization"] || req.headers["authorization"];
+
+  const token = headers.split(" ")[1];
+
+  if (!token) {
+    const error = createError(httpStatus.FAIL, 400, "token required");
+    return next(error);
+  }
+
+  const vendorId = jwt.decode(token).id;
+
+  const errors = validationResult(req);
+
+  if(!errors.isEmpty()){
+
+    const error = createError(httpStatus.FAIL,400,errors.array());
+    return next(error);
+
+  }
+
+  const {coupon} = req.body;
+
+
+  try{
+
+    await pool`INSERT INTO coupons (vendor_id,coupon) VALUES (${vendorId},${coupon})`;
+
+    res.json({status: httpStatus.SUCCESS})
+
+  } catch(err){
+    next(err)
+  }
+}
+
+const deleteCoupon = async(req,res,next)=>{
+
+  const headers = req.headers["Authorization"] || req.headers["authorization"];
+
+  const token = headers.split(" ")[1];
+
+  if (!token) {
+    const error = createError(httpStatus.FAIL, 400, "token required");
+    return next(error);
+  }
+
+  const vendorId = jwt.decode(token).id;
+
+  const {couponId} = req.params;
+
+  try{
+
+    await pool`DELETE FROM coupons WHERE id=${couponId} AND vendor_id=${vendorId}`;
+
+    res.json({status: httpStatus.SUCCESS})
+
+  } catch(err){
+    next(err)
+  }
+}
+
+
 module.exports = {
   updateProduct,
   deleteProduct,
@@ -275,5 +440,9 @@ module.exports = {
   deleteOrder,
   acceptOrder,
   getHistory,
-  getComments
+  getComments,
+  getStats,
+  getCoupons,
+  addCoupon,
+  deleteCoupon
 };

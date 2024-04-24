@@ -22,6 +22,7 @@ const addVendor = async (req, res, next) => {
     image,
     phone_number,
     city,
+    status,
     email_verification,
   } = req.body;
 
@@ -65,8 +66,8 @@ const addVendor = async (req, res, next) => {
     res.json({ status: httpStatus.SUCCESS });
   } else {
     try {
-      await pool`INSERT INTO vendor (first_name,last_name,email,password,image,phone_number,city) 
-        VALUES (${first_name},${last_name},${email},${hashed_password},${image},${phone_number},${city})`;
+      await pool`INSERT INTO vendor (first_name,last_name,email,password,image,phone_number,city,status) 
+        VALUES (${first_name},${last_name},${email},${hashed_password},${image},${phone_number},${city},${status})`;
 
       const userRes = await pool`SELECT id FROM vendor WHERE email=${email}`;
 
@@ -97,7 +98,7 @@ const addVendor = async (req, res, next) => {
 
 const updateVendor = async (req, res, next) => {
   const { userId } = req.params;
-  const { first_name, last_name, email, phone_number,city, image } = req.body;
+  const { first_name, last_name, email, phone_number,city,image } = req.body;
   const errors = validationResult(req);
   if (!errors.isEmpty()) {
     const err = createError(httpStatus.FAIL, 400, errors.array());

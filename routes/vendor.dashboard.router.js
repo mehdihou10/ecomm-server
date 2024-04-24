@@ -3,6 +3,7 @@ const express = require("express");
 const router = express.Router();
 
 const validationDashboard = require("../middlewares/verify.vendor.dashboard");
+const validationCoupon = require('../middlewares/verify.coupon');
 const vendorDashboardControllers = require("../controllers/vendor.dashboard.controllers");
 
 
@@ -27,5 +28,11 @@ router.get("/history/show",vendorDashboardControllers.getHistory)
 
 //comments
 router.get("/:productId/comments",vendorDashboardControllers.getComments);
+
+//main dashboard
+router.get("/stats/show",vendorDashboardControllers.getStats);
+router.get("/coupons/show",vendorDashboardControllers.getCoupons);
+router.post("/coupons/add",validationCoupon,vendorDashboardControllers.addCoupon);
+router.delete("/coupons/delete/:couponId",vendorDashboardControllers.deleteCoupon);
 
 module.exports = router;
