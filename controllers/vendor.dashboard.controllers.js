@@ -151,11 +151,24 @@ const deleteProduct = async (req, res, next) => {
 };
 
 const getOrders = async (req, res, next) => {
+
+  const headers = req.headers["Authorization"] || req.headers["authorization"];
+
+  const token = headers.split(" ")[1];
+
+  if (!token) {
+    const error = createError(httpStatus.FAIL, 400, "token required");
+    return next(error);
+  }
+
+  const vendorId = jwt.decode(token).id;
+
+
   try {
     const orders =
       await pool`select O.id, U.id as user_id,P.id as product_id,U.first_name,U.last_name,P.name,O.user_city,O.user_phone_number,O.qte,P.image
        from "order" O,product P ,users U,vendor V
-        where O.product_id = P.id and V.id = P.vendor_id and U.id = O.user_id `;
+        where O.product_id = P.id and V.id = P.vendor_id and U.id = O.user_id and P.vendor_id=${vendorId} `;
     return res.json({ status: httpStatus.SUCCESS, data: orders });
   } catch (error) {
     return next(error);
@@ -206,13 +219,13 @@ const acceptOrder = async (req,res,next)=>{
     </div>
 
     <p>
-    We emailed you to confirm that your order has been successfully sent to
+    We emailed you to confirm that your order has been confirmed by
     <span style='font-weight: bold; font-style: italic'>${vendorData[0].first_name} ${vendorData[0].last_name}</span>
     </p>
-    phone number:<a href="tel:${vendorData[0].phone_number}">${vendorData[0].phone_number}</a>
+    vendor's phone number:<a href="tel:${vendorData[0].phone_number}">${vendorData[0].phone_number}</a>
     `;
 
-    sendEmail(html,userData[0].email,"Order Successfully Sent!");
+    sendEmail(html,userData[0].email,"Order Confirmed!");
 
     res.json({status: httpStatus.SUCCESS});
 
