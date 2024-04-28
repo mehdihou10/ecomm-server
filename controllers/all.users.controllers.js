@@ -18,6 +18,28 @@ const login = async (req, res, next) => {
   }
   const users = await pool`select * from users`;
   const vendors = await pool`select * from vendor`;
+  const admins = await pool`select * from admin`;
+
+  for (i = 0; i < admins.length; i++) {
+    const isValidPassword = await bcrypt.compare(password, admins[i].password);
+    if (admins[i].email === email) {
+      if (!isValidPassword) {
+        const error = createError(httpStatus.FAIL, 400, [
+          { msg: "incorrect password" },
+        ]);
+        return next(error);
+      } else {
+        const token = generateToken({
+          type: "admin",
+          id: admins[i].id,
+          email: admins[i].email,
+          first_name: admins[i].first_name,
+          last_name: admins[i].last_name,
+        });
+        return res.json({ status: httpStatus.SUCCESS, token, type: "admin" });
+      }
+    }
+  }
   for (i = 0; i < users.length; i++) {
     const isValidPassword = await bcrypt.compare(password, users[i].password);
     if (users[i].email === email) {

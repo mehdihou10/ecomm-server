@@ -44,8 +44,10 @@ const decodeRouter = require('./routes/decode.route');
 const vendorDashboardRouter = require('./routes/vendor.dashboard.router');
 const categoriesRouter = require('./routes/categories.route');
 const contactRouter = require('./routes/contact.admins.route');
+const adminRouter = require("./routes/admin.route");
 
 app.use("/api/users", userRouter);
+app.use("/api/admin",adminRouter);
 app.use("/api/vendors", vendorRouter);
 app.use("/api/all",allUsersRouter);
 app.use("/api/decode",decodeRouter);
