@@ -8,6 +8,6 @@ const validateUpdate = require("../middlewares/verify.all.users.update.js");
 
 router.post("/register", validationScheme.register, userController.register);
 router.put("/update/:userId",validateUpdate.client, userController.updateUser);
-
+router.get("/:userId/:type",userController.getOrders);
 
 module.exports = router;

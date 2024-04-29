@@ -3,6 +3,7 @@ const httpStatus = require("../utils/http.status");
 const createError = require("../utils/create.error");
 const generateToken = require("../utils/generate.token");
 const bcrypt = require("bcryptjs");
+const jwt = require('jsonwebtoken');
 
 const { validationResult } = require("express-validator");
 
@@ -93,7 +94,44 @@ const updateUser = async (req, res, next) => {
   }
 };
 
+const getOrders = async (req,res,next)=>{
+
+  const {userId,type} = req.params;
+
+
+  try{
+
+    let orders;
+
+    if(type === "pending"){
+
+       orders = await pool`SELECT O.id,P.name,P.image,O.qte,O.total,V.first_name,V.last_name,V.phone_number
+                           FROM "order" O,product P,vendor V
+                           WHERE O.product_id=P.id AND P.vendor_id=V.id AND user_id=${userId}`;
+       
+      } else if(type === "accepted"){
+
+        orders = await pool`SELECT H.id,P.name,P.image,H.qte,H.total,H.received,V.first_name,V.last_name,V.phone_number
+                            FROM history H,product P,vendor V
+                            WHERE H.product_id=P.id AND P.vendor_id=V.id AND user_id=${userId}`;
+        
+      } else if(type === "rejected"){
+
+        orders = await pool`SELECT R.id,P.name,P.image,V.first_name,V.last_name,V.phone_number
+                            FROM "rejectedOrders" R,product P,vendor V
+                            WHERE R.product_id=P.id AND P.vendor_id=V.id AND user_id=${userId}`;
+
+      }
+      
+      res.json({status: httpStatus.SUCCESS,orders});
+
+  } catch(err){
+    next(err)
+  }
+}
+
 module.exports = {
   updateUser,
   register,
+  getOrders
 };

@@ -166,7 +166,7 @@ const getOrders = async (req, res, next) => {
 
   try {
     const orders =
-      await pool`select O.id, U.id as user_id,P.id as product_id,U.first_name,U.last_name,P.name,O.user_city,O.user_phone_number,O.qte,P.image
+      await pool`select O.id, U.id as user_id,P.id as product_id,U.first_name,U.last_name,P.name,O.user_city,O.user_phone_number,O.qte,O.total,P.image
        from "order" O,product P ,users U,vendor V
         where O.product_id = P.id and V.id = P.vendor_id and U.id = O.user_id and P.vendor_id=${vendorId} `;
     return res.json({ status: httpStatus.SUCCESS, data: orders });
@@ -201,13 +201,13 @@ const deleteOrder = async (req, res, next) => {
 
 const acceptOrder = async (req,res,next)=>{
 
-  const {id,user_id,product_id,qte,date,city} = req.body;
+  const {id,user_id,product_id,qte,date,city,total} = req.body;
 
   try{
 
     await pool`UPDATE product SET qte=qte-${qte} WHERE id=${product_id}`;
 
-    await pool`INSERT INTO history (user_id,product_id,qte,date,city) VALUES(${user_id},${product_id},${qte},${date},${city})`;
+    await pool`INSERT INTO history (user_id,product_id,qte,date,city,total) VALUES(${user_id},${product_id},${qte},${date},${city},${total})`;
     await pool`DELETE FROM "order" WHERE id=${id}`;
 
     const userData = await pool`SELECT * FROM users WHERE id=${user_id}`;
@@ -250,7 +250,7 @@ const getHistory = async (req,res,next)=>{
 
   try{
 
-    const history = await pool`SELECT P.name,P.image,U.first_name,U.last_name,H.date,H.qte,H.city
+    const history = await pool`SELECT P.name,P.image,U.first_name,U.last_name,H.date,H.qte,H.city,H.total
                                FROM history H,product P,users U
                                WHERE H.product_id=P.id AND H.user_id=U.id AND P.vendor_id=${vendorId}`;
 
