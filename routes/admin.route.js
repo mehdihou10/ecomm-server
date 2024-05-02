@@ -15,5 +15,6 @@ router.delete("/accounts/clients/:id", adminController.deleteClient);
 router.get("/accounts/clients/messages", adminController.getClientMessages);
 router.get("/accounts/vendor/messages", adminController.getVendorMessages);
 router.patch("/update/:id", validationScheme,adminController.updateAdmin);
+router.get("/stats",adminController.getStats);
 
 module.exports = router;
