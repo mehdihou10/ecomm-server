@@ -178,6 +178,9 @@ const getOrders = async (req, res, next) => {
 const deleteOrder = async (req, res, next) => {
   productId = req.params.id;
   userId = req.body.id;
+
+  const date = new Date();
+
   try {
     const order =
       await pool`select * from "order" where user_id = ${userId} and product_id = ${productId}`;
@@ -188,7 +191,27 @@ const deleteOrder = async (req, res, next) => {
       return next(error);
     }
     await pool`delete from "order" where product_id = ${productId} and user_id = ${userId} `;
-    await pool`insert into "rejectedOrders" (user_id,product_id) VALUES(${userId},${productId})`;
+    await pool`insert into "rejectedOrders" (user_id,product_id,date) VALUES(${userId},${productId},${date})`;
+
+    const userData = await pool`SELECT * FROM users WHERE id=${userId}`;
+    const vendorData = await pool`SELECT V.*,P.name FROM product P,vendor V WHERE P.vendor_id=V.id AND P.id=${productId}`;
+
+    const html = `
+    <div>
+    Hi, <span style='font-weight: bold; font-style: italic'>${userData[0].first_name}</span>
+    </div>
+
+    <p>
+    We emailed you to confirm that your order for: <span style='font-weight: bold; font-style: italic'>${vendorData[0].name}</span>
+     has been rejected by
+    <span style='font-weight: bold; font-style: italic'>${vendorData[0].first_name} ${vendorData[0].last_name}</span>
+    </p>
+    vendor's phone number:<a href="tel:${vendorData[0].phone_number}">${vendorData[0].phone_number}</a>
+    `;
+
+    sendEmail(html,userData[0].email,"Order Rejected!");
+
+
     return res.json({
       status: httpStatus.SUCCESS,
       message: "deleted successfully",
@@ -211,7 +234,7 @@ const acceptOrder = async (req,res,next)=>{
     await pool`DELETE FROM "order" WHERE id=${id}`;
 
     const userData = await pool`SELECT * FROM users WHERE id=${user_id}`;
-    const vendorData = await pool`SELECT V.* FROM product P,vendor V WHERE P.vendor_id=V.id AND P.id=${product_id}`;
+    const vendorData = await pool`SELECT V.*,P.name FROM product P,vendor V WHERE P.vendor_id=V.id AND P.id=${product_id}`;
 
     const html = `
     <div>
@@ -219,7 +242,8 @@ const acceptOrder = async (req,res,next)=>{
     </div>
 
     <p>
-    We emailed you to confirm that your order has been confirmed by
+    We emailed you to confirm that your order for: <span style='font-weight: bold; font-style: italic'>${vendorData[0].name}</span>
+     has been confirmed by
     <span style='font-weight: bold; font-style: italic'>${vendorData[0].first_name} ${vendorData[0].last_name}</span>
     </p>
     vendor's phone number:<a href="tel:${vendorData[0].phone_number}">${vendorData[0].phone_number}</a>
