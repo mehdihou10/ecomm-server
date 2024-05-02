@@ -20,9 +20,6 @@ const getPendingAccounts = async (req, res, next) => {
   try {
     const vendorsAccounts =
       await pool`select * from vendor where status = 'pending' `;
-    if (vendorsAccounts.length === 0) {
-      return res.json({ status: httpStatus.FAIL, data: "no such accounts" });
-    }
 
     return res.json({ status: httpStatus.SUCCESS, vendorsAccounts });
   } catch (error) {
@@ -32,12 +29,16 @@ const getPendingAccounts = async (req, res, next) => {
 
 const acceptVendor = async (req, res, next) => {
   const id = req.params.id;
+  const { date } = req.body;
   try {
     const vendor = await pool`select * from vendor where id = ${id}`;
     if (vendor.length === 0) {
-      return res.json({ status: httpStatus.FAIL, data: "no such vednor" });
+      const error = createError(httpStatus.FAIL, 400, [
+        { msg: "Vendor not found" },
+      ]);
+      return next(error);
     }
-    await pool`update vendor set status = 'accepted' where id = ${id} `;
+    await pool`update vendor set status = 'accepted',accepted_at = ${date} where id = ${id} `;
     const html = `
         Hi <span style='font-weight: bold; font-style: italic'>${vendor[0].first_name}</span>,
         <p>You are has been accepted by the admin</p>
@@ -53,10 +54,8 @@ const deleteVendor = async (req, res, next) => {
   const id = req.params.id;
   try {
     const vendor = await pool`select * from vendor where id = ${id}`;
-    if (vendor.length === 0) {
-      return res.json({ status: httpStatus.FAIL, data: "no such vednor" });
-    }
 
+    await pool`insert into "deletedVendors" (email) values(${vendor[0].email}) `;
     await pool`delete from vendor where id = ${id}`;
     const html = `
         Hi <span style='font-weight: bold; font-style: italic'>${vendor[0].first_name}</span>,
@@ -82,12 +81,6 @@ const getAcceptedAccounts = async (req, res, next) => {
   try {
     const acceptedAccounts =
       await pool` select * from vendor where status = 'accepted' `;
-    if (acceptedAccounts.length === 0) {
-      return res.json({
-        status: httpStatus.FAIL,
-        data: "no such accepted vednor",
-      });
-    }
     return res.json({ status: httpStatus.SUCCESS, acceptedAccounts });
   } catch (error) {
     return next(error);
@@ -104,12 +97,6 @@ const getClients = async (req, res, next) => {
   }
   try {
     const clients = await pool`select * from users`;
-    if (clients.length === 0) {
-      return res.json({
-        status: httpStatus.FAIL,
-        data: "no such client",
-      });
-    }
 
     return res.json({ status: httpStatus.SUCCESS, clients });
   } catch (error) {
@@ -121,12 +108,8 @@ const deleteClient = async (req, res, next) => {
   const id = req.params.id;
   try {
     const client = await pool`select * from users where id = ${id}`;
-    if (client.length === 0) {
-      return res.json({
-        status: httpStatus.FAIL,
-        data: "no such client",
-      });
-    }
+
+    await pool`insert into "deletedUsers" (email) values(${client[0].email})`;
     await pool`delete from users where id = ${id}`;
 
     const html = `
@@ -195,6 +178,27 @@ const updateAdmin = async (req, res, next) => {
   }
 };
 
+const getStats = async(req,res,next) =>{
+  try{
+
+    const clients =  await pool`select count(*) as clients from users` 
+    const vendors = await pool ` select count(*) as vendors from vendor`
+    const acceptedOrders = await pool `select count(*) as acceptedOrders from history`
+    const products = await pool ` select count(*) as products from product`
+    const fullData  ={
+      clients : clients[0],
+      vendors : vendors[0],
+      acceptedOrders : acceptedOrders[0],
+      products:products[0]
+    }
+
+    return res.json({status:httpStatus.SUCCESS, data: fullData})
+
+  }catch(error){
+    return next(error)
+  }
+}
+
 module.exports = {
   deleteVendor,
   getPendingAccounts,
@@ -205,4 +209,5 @@ module.exports = {
   getClientMessages,
   getVendorMessages,
   updateAdmin,
+  getStats
 };
