@@ -45,6 +45,7 @@ const vendorDashboardRouter = require('./routes/vendor.dashboard.router');
 const categoriesRouter = require('./routes/categories.route');
 const contactRouter = require('./routes/contact.admins.route');
 const adminRouter = require("./routes/admin.route");
+const mainRouter = require('./routes/main.route');
 
 app.use("/api/users", userRouter);
 app.use("/api/admin",adminRouter);
@@ -53,6 +54,7 @@ app.use("/api/all",allUsersRouter);
 app.use("/api/decode",decodeRouter);
 app.use("/api/products",vendorDashboardRouter);
 app.use("/api/categories",categoriesRouter);
+app.use("/api/main",mainRouter);
 app.use("/api/contact",contactRouter);
 
 //error handeler

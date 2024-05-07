@@ -26,5 +26,42 @@ const getCategory = async (req,res,next)=>{
     }
 }
 
+const getProductsByCategory = async (req,res,next)=>{
 
-module.exports = {getCategories,getCategory}
+    const {categoryName} = req.params;
+
+    try{
+
+        const products = await pool`SELECT P.*
+                                    FROM product P,category C
+                                    WHERE P.category_id=C.id AND C.name=${categoryName}`
+
+
+        res.json({status: httpStatus.SUCCESS,products});                            
+
+    } catch(err){
+        next(err)
+    }
+}
+
+const getProductsById = async (req,res,next)=>{
+
+    const {categoryId} = req.params;
+    const {productid} = req.headers;
+
+    try{
+
+        const products = await pool`SELECT P.*
+                                    FROM product P,category C
+                                    WHERE P.category_id=C.id AND C.id=${categoryId} AND P.id!=${productid}`;
+
+
+        res.json({status: httpStatus.SUCCESS,products});                            
+
+    } catch(err){
+        next(err)
+    }
+}
+
+
+module.exports = {getCategories,getCategory,getProductsByCategory,getProductsById}
