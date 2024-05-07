@@ -60,7 +60,7 @@ const deleteVendor = async (req, res, next) => {
     // await pool`delete from vendor where id = ${id}`;
     const html = `
         Hi <span style='font-weight: bold; font-style: italic'>${vendor[0].first_name}</span>,
-        <p>You are has been deleted by the admin</p>
+        <p>Your account has been deleted by the admin</p>
         `;
     sendEmail(html, vendor[0].email, "your acount is deleted");
 
@@ -115,7 +115,7 @@ const deleteClient = async (req, res, next) => {
 
     const html = `
     Hi <span style='font-weight: bold; font-style: italic'>${client[0].first_name}</span>,
-    <p>You are has been deleted by the admin</p>
+    <p>Your account has been deleted by the admin</p>
     `;
     sendEmail(html, client[0].email, "your account is deleted");
     return res.json({ status: httpStatus.SUCCESS });
