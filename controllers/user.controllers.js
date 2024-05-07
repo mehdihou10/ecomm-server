@@ -47,7 +47,7 @@ const register = async (req, res, next) => {
     res.json({ status: httpStatus.SUCCESS });
   } else {
     try {
-      await pool`insert into users (first_name,last_name,email,password,image) VALUES(${first_name},${last_name},${email},${hasedPassword},${image})`;
+      await pool`insert into users (first_name,last_name,email,password,image,status) VALUES(${first_name},${last_name},${email},${hasedPassword},${image},'accepted')`;
       const newUser = await pool`select * from users where email = ${email}`;
       const token = generateToken({
         type: "client",
