@@ -41,28 +41,42 @@ const login = async (req, res, next) => {
     }
   }
   for (i = 0; i < users.length; i++) {
-    const isValidPassword = await bcrypt.compare(password, users[i].password);
-    if (users[i].email === email) {
-      if (!isValidPassword) {
-        const error = createError(httpStatus.FAIL, 400, [
-          { msg: "incorrect password" },
-        ]);
-        return next(error);
-      } else {
-        const token = generateToken({
-          type: "client",
-          id: users[i].id,
-          first_name: users[i].first_name,
-          last_name: users[i].last_name,
-          image: users[i].image,
-          email: users[i].email,
-        });
-        return res.json({ status: httpStatus.SUCCESS, token, type: "client" });
+    if(users[i].status === 'accepted'){
+      const isValidPassword = await bcrypt.compare(password, users[i].password);
+      if (users[i].email === email) {
+        if (!isValidPassword) {
+          const error = createError(httpStatus.FAIL, 400, [
+            { msg: "incorrect password" },
+          ]);
+          return next(error);
+        } else {
+          const token = generateToken({
+            type: "client",
+            id: users[i].id,
+            first_name: users[i].first_name,
+            last_name: users[i].last_name,
+            image: users[i].image,
+            email: users[i].email,
+          });
+          return res.json({ status: httpStatus.SUCCESS, token, type: "client" });
+        }
       }
+
+    }else{
+      const error = createError(httpStatus.FAIL, 400, [
+        { msg: "account deleted" },
+      ]);
+      return next(error);
     }
   }
 
   for (i = 0; i < vendors.length; i++) {
+    if(vendors[i].status === 'deleted'){
+      const error = createError(httpStatus.FAIL, 400, [
+        { msg: "account deleted" },
+      ]);
+      return next(error);
+    }
     const isValidPassword = await bcrypt.compare(password, vendors[i].password);
     if (vendors[i].email === email) {
       if (!isValidPassword) {

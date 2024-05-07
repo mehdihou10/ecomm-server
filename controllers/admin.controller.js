@@ -55,8 +55,9 @@ const deleteVendor = async (req, res, next) => {
   try {
     const vendor = await pool`select * from vendor where id = ${id}`;
 
-    await pool`insert into "deletedVendors" (email) values(${vendor[0].email}) `;
-    await pool`delete from vendor where id = ${id}`;
+    await pool`update vendor set status = 'deleted' where id=${id} `;
+    // await pool`insert into "deletedVendors" (email) values(${vendor[0].email}) `;
+    // await pool`delete from vendor where id = ${id}`;
     const html = `
         Hi <span style='font-weight: bold; font-style: italic'>${vendor[0].first_name}</span>,
         <p>You are has been deleted by the admin</p>
@@ -96,7 +97,7 @@ const getClients = async (req, res, next) => {
     return next(error);
   }
   try {
-    const clients = await pool`select * from users`;
+    const clients = await pool`select * from users where status = 'accepted' `;
 
     return res.json({ status: httpStatus.SUCCESS, clients });
   } catch (error) {
@@ -108,15 +109,15 @@ const deleteClient = async (req, res, next) => {
   const id = req.params.id;
   try {
     const client = await pool`select * from users where id = ${id}`;
-
-    await pool`insert into "deletedUsers" (email) values(${client[0].email})`;
-    await pool`delete from users where id = ${id}`;
+    await pool`update users set status = 'deleted' where id = ${id}'`;
+    // await pool`insert into "deletedUsers" (email) values(${client[0].email})`;
+    // await pool`delete from users where id = ${id}`;
 
     const html = `
     Hi <span style='font-weight: bold; font-style: italic'>${client[0].first_name}</span>,
     <p>You are has been deleted by the admin</p>
     `;
-    sendEmail(html, client[0].email, "your acount is deleted");
+    sendEmail(html, client[0].email, "your account is deleted");
     return res.json({ status: httpStatus.SUCCESS });
   } catch (error) {
     return next(error);
@@ -178,26 +179,25 @@ const updateAdmin = async (req, res, next) => {
   }
 };
 
-const getStats = async(req,res,next) =>{
-  try{
+const getStats = async (req, res, next) => {
+  try {
+    const clients = await pool`select count(*) as clients from users`;
+    const vendors = await pool` select count(*) as vendors from vendor`;
+    const acceptedOrders =
+      await pool`select count(*) as acceptedOrders from history`;
+    const products = await pool` select count(*) as products from product`;
+    const fullData = {
+      clients: clients[0],
+      vendors: vendors[0],
+      acceptedOrders: acceptedOrders[0],
+      products: products[0],
+    };
 
-    const clients =  await pool`select count(*) as clients from users` 
-    const vendors = await pool ` select count(*) as vendors from vendor`
-    const acceptedOrders = await pool `select count(*) as acceptedOrders from history`
-    const products = await pool ` select count(*) as products from product`
-    const fullData  ={
-      clients : clients[0],
-      vendors : vendors[0],
-      acceptedOrders : acceptedOrders[0],
-      products:products[0]
-    }
-
-    return res.json({status:httpStatus.SUCCESS, data: fullData})
-
-  }catch(error){
-    return next(error)
+    return res.json({ status: httpStatus.SUCCESS, data: fullData });
+  } catch (error) {
+    return next(error);
   }
-}
+};
 
 module.exports = {
   deleteVendor,
@@ -209,5 +209,5 @@ module.exports = {
   getClientMessages,
   getVendorMessages,
   updateAdmin,
-  getStats
+  getStats,
 };
