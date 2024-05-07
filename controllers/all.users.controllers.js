@@ -71,14 +71,15 @@ const login = async (req, res, next) => {
   }
 
   for (i = 0; i < vendors.length; i++) {
-    if(vendors[i].status === 'deleted'){
-      const error = createError(httpStatus.FAIL, 400, [
-        { msg: "account deleted" },
-      ]);
-      return next(error);
-    }
+  
     const isValidPassword = await bcrypt.compare(password, vendors[i].password);
     if (vendors[i].email === email) {
+      if(vendors[i].status === 'deleted'){
+        const error = createError(httpStatus.FAIL, 400, [
+          { msg: "account deleted" },
+        ]);
+        return next(error);
+      }
       if (!isValidPassword) {
         const error = createError(httpStatus.FAIL, 400, [
           { msg: "incorrect password" },
