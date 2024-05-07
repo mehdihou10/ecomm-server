@@ -45,7 +45,7 @@ const login = async (req, res, next) => {
     if (users[i].email === email) {
       if (users[i].status === "deleted") {
         const error = createError(httpStatus.FAIL, 400, [
-          { msg: " account deleted" },
+          { msg: "account deleted" },
         ]);
         return next(error);
       }
