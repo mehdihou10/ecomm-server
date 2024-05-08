@@ -192,14 +192,12 @@ const getStats = async (req, res, next) => {
       clients: clients[0],
       vendors: vendors[0],
       acceptedOrders: acceptedOrders[0],
+      rejectedOrders: rejectedOrders[0],
       products: products[0],
-      ordersPercentage:
+      ordersPercentage: 
         Math.ceil(
-          (+acceptedOrders[0] /
-            (+acceptedOrders[0] +
-              +rejectedOrders[0])) *
-            100
-        ) || 0,
+          ((+acceptedOrders[0].acceptedorders) / ((+acceptedOrders[0].acceptedorders) + (+rejectedOrders[0].rejectedorders))) * 100
+        ) || 0 ,
     };
 
     return res.json({ status: httpStatus.SUCCESS, data: fullData });
