@@ -185,12 +185,21 @@ const getStats = async (req, res, next) => {
     const vendors = await pool` select count(*) as vendors from vendor`;
     const acceptedOrders =
       await pool`select count(*) as acceptedOrders from history`;
+    const rejectedOrders =
+      await pool`select count(*) as rejectedOrders from "rejectedOrders"`;
     const products = await pool` select count(*) as products from product`;
     const fullData = {
       clients: clients[0],
       vendors: vendors[0],
       acceptedOrders: acceptedOrders[0],
       products: products[0],
+      ordersPercentage:
+        Math.ceil(
+          (+acceptedOrders[0] /
+            (+acceptedOrders[0] +
+              +rejectedOrders[0])) *
+            100
+        ) || 0,
     };
 
     return res.json({ status: httpStatus.SUCCESS, data: fullData });
