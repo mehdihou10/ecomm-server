@@ -26,24 +26,19 @@ const register = async (req, res, next) => {
     ]);
     return next(error);
   }
-
   if (oldUserVendor[0].count > 0) {
     const error = createError(httpStatus.FAIL, 400, [
       { msg: "account already found" },
     ]);
     return next(error);
   }
-
   const hasedPassword = await bcrypt.hash(password, 10);
-
   if (email_verification) {
     const html = `
         <h4>Please copy this code:</h4>
         <code><h4 style='background-color: #eee; padding: 10px 20px;font-size: 20px; width: fit-content'>${email_verification}</h4></code>
         `;
-
     verifyEmail(html, email, "verification code");
-
     res.json({ status: httpStatus.SUCCESS });
   } else {
     try {
