@@ -66,6 +66,17 @@ const addProduct = async (req, res, next) => {
   }
 
   try {
+
+    const productCount = await pool`SELECT COUNT(*) FROM product WHERE name=${name}`;
+
+    if(+productCount[0].count > 0){
+
+      const error = createError(httpStatus.FAIL,400,[{msg: "Product name Already used"}]);
+      return next(error);
+
+    }
+
+
     await pool`insert into product (name,description,category_id,vendor_id,image,price,brand,qte,date) values(${name},${description},${category_id},${vendor_id},${image},${price},${brand},${qte},${date})`;
     res.json({ status: httpStatus.SUCCESS });
   } catch (error) {
@@ -104,6 +115,17 @@ const updateProduct = async (req, res, next) => {
   const { name, description, image, price, category_id,qte,brand } = req.body;
 
   try {
+
+    const productCount = await pool`SELECT COUNT(*) FROM product WHERE name=${name} AND id!=${productId}`;
+
+    if(+productCount[0].count > 0){
+
+      const error = createError(httpStatus.FAIL,400,[{msg: "Product name Already used"}]);
+      return next(error);
+
+    }
+
+    
     await pool`UPDATE product
                    SET name=${name},
                    description=${description},
@@ -166,7 +188,7 @@ const getOrders = async (req, res, next) => {
 
   try {
     const orders =
-      await pool`select O.id, U.id as user_id,P.id as product_id,U.first_name,U.last_name,P.name,O.user_city,O.user_phone_number,O.qte,O.total,P.image
+      await pool`select O.id, U.id as user_id,P.id as product_id,U.first_name,U.last_name,P.name,O.user_city,O.user_phone_number,O.qte,O.total,O.date,P.image
        from "order" O,product P ,users U,vendor V
         where O.product_id = P.id and V.id = P.vendor_id and U.id = O.user_id and P.vendor_id=${vendorId} `;
     return res.json({ status: httpStatus.SUCCESS, data: orders });

@@ -2,6 +2,9 @@ const createError = require('../utils/create.error');
 const httpStatus = require('../utils/http.status');
 const pool = require('../db');
 const jwt = require('jsonwebtoken');
+const {validationResult} = require('express-validator');
+const sendEmail = require('../utils/send.email');
+
 
 
 const getProducts = async (req,res,next)=>{
@@ -162,7 +165,17 @@ const getCart = async (req,res,next)=>{
                                     WHERE C.product_id=P.id AND C.user_id=${userId}`;
 
 
-        res.json({status: httpStatus.SUCCESS,products})  
+   const prices = await pool`SELECT C.qte , P.price
+                                    FROM cart C,product P
+                                    WHERE C.product_id=P.id AND C.user_id=${userId}`; 
+                                    
+                                    
+    const vendors = await pool`SELECT P.vendor_id
+                                    FROM cart C,product P
+                                    WHERE C.product_id=P.id AND C.user_id=${userId}
+                                    GROUP BY P.vendor_id`;                                
+
+        res.json({status: httpStatus.SUCCESS,products,prices,vendors: vendors.length})  
 
   try{
 
@@ -300,6 +313,150 @@ const getWishlist = async(req,res,next)=>{
     }
 }
 
+const verifyCoupon = async (req,res,next)=>{
+
+    const {coupon} = req.body;
+    
+
+    if(coupon.trim() === ""){
+
+        const error = createError(httpStatus.FAIL,400,"Please Add a Coupon");
+        return next(error);
+    }
+
+    try{
+
+        const count = await pool`SELECT COUNT(*) FROM coupons WHERE LOWER(coupon)=${coupon.toLowerCase()}`;
+
+        if(+count[0].count === 0){
+
+            const error = createError(httpStatus.FAIL,404,"Invalid Coupon")
+            return next(error)
+
+        }
+
+        res.json({status: httpStatus.SUCCESS})
+
+    } catch(err){
+        next(err)
+    }
+}
+
+const completeOrder = async (req,res,next)=>{
+
+    const errors = validationResult(req);
+
+    if(!errors.isEmpty()){
+
+        const error = createError(httpStatus.FAIL,400,errors.array());
+        return next(error);
+    }
+
+    const {qte,user_phone_number,user_city,user_id,product_id,total,date,address,user} = req.body;
+
+    try{
+
+        const count = await pool`SELECT COUNT(*) FROM "order" WHERE user_id=${user_id} AND product_id=${product_id}`;
+
+        if(+count[0].count > 0){
+
+            const error = createError(httpStatus.FAIL,400,[{msg: "Product already ordered"}])
+            return next(error);
+        }
+
+        await pool`INSERT INTO "order" (qte,user_phone_number,user_city,user_id,product_id,total,date,address)
+        VALUES (${qte},${user_phone_number},${user_city},${user_id},${product_id},${total},${date},${address})`;
+
+        await pool`DELETE FROM cart WHERE user_id=${user_id}`;
+
+        await pool`UPDATE product SET orders=orders+1 WHERE id=${product_id}`; 
+
+        const vendorData = await pool`SELECT * 
+                                      FROM product P,vendor V
+                                      WHERE V.id=P.vendor_id AND P.id=${product_id}`;
+
+
+        const productData = await pool`SELECT name FROM product WHERE id=${product_id}`;                              
+
+
+        const html = `<div>
+
+            <p>Hi <span style="font-weight: bold;">${vendorData[0].first_name}</span>,</p>
+            <p>You recieved an order From <span>${user.first_name} ${user.last_name}</span></p>:
+            <p><span style="font-weight: bold;">${qte} X ${productData[0].name}</span></p>
+            <p>Full Address: ${address}</p>
+            <p>Total: </p>
+            <h3>${total} DZD</h3>
+
+
+        </div>`
+
+        sendEmail(html,vendorData[0].email,"You recived a new Order")                              
+
+
+        res.json({status: "success"})
+
+    } catch(err){
+        next(err)
+    }
+
+}
+
+const getCountData = async (req,res,next)=>{
+
+    const headers = req.headers["Authorization"] || req.headers["authorization"];
+
+    const token = headers.split(" ")[1];
+  
+    if (!token) {
+      const error = createError(httpStatus.FAIL, 400, "token required");
+      return next(error);
+    }
+  
+  
+  
+    const userId = jwt.decode(token).id;
+
+    try{
+
+        const cart = await pool`SELECT COUNT(*) FROM cart WHERE user_id=${userId}`;
+        const wishlist = await pool`SELECT COUNT(*) FROM wishlist WHERE user_id=${userId}`;
+
+        res.json({status: httpStatus.SUCCESS,cart: cart[0].count,wishlist: wishlist[0].count});
+
+    } catch(err){
+        next(err);
+    }
+}
+
+const getSimilarProducts = async (req,res,next)=>{
+
+   const {productName} = req.params;
+
+   try{
+
+    const product = await pool`SELECT id,brand FROM product WHERE name=${productName}`;
+
+    const brand = product[0].brand;
+    const productId = product[0].id;
+
+
+    const products = await pool`SELECT *
+                                FROM product
+                                WHERE id!=${productId} AND (
+                                LOWER(brand)=LOWER(${brand}) OR 
+                                POSITION(LOWER(${brand}) IN LOWER(brand)) > 0 OR
+                                POSITION(LOWER(brand) IN LOWER(${brand})) > 0)
+                                ORDER BY price ASC
+                                `
+
+    res.json({status: httpStatus.SUCCESS,products})
+
+   } catch(err){
+    next(err);
+   }
+
+}
 
 module.exports = {
 
@@ -312,6 +469,11 @@ module.exports = {
     removeFromCart,
     toggleWishlist,
     isExistsInWishlist,
-    getWishlist
+    getWishlist,
+    verifyCoupon,
+    completeOrder,
+    getCountData,
+    getSimilarProducts
+    
 
 }

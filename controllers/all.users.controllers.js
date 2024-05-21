@@ -35,6 +35,7 @@ const login = async (req, res, next) => {
           email: admins[i].email,
           first_name: admins[i].first_name,
           last_name: admins[i].last_name,
+          image: admins[i].image
         });
         return res.json({ status: httpStatus.SUCCESS, token, type: "admin" });
       }

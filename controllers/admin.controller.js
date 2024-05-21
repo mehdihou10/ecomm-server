@@ -171,6 +171,7 @@ const updateAdmin = async (req, res, next) => {
       first_name,
       last_name,
       email,
+      image: admin[0].image
     });
 
     return res.json({ status: httpStatus.SUCCESS, token });
