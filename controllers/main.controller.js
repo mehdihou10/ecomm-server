@@ -27,7 +27,7 @@ const getProduct = async (req,res,next)=>{
 
     try{
 
-        const products = await pool`SELECT * FROM product WHERE name=${productName}`;
+        const products = await pool`SELECT P.*,V.first_name,V.last_name,V.image AS vendor_image FROM product P,vendor V WHERE P.vendor_id=V.id AND name=${productName}`;
         const commentData = await pool`SELECT AVG(rating),COUNT(*)
                                        FROM comments C,product P
                                        WHERE C.product_id=P.id AND P.name=${productName}`
@@ -116,11 +116,25 @@ const addToCart = async (req,res,next)=>{
   try{
 
     const count = await pool`SELECT COUNT(*) FROM cart WHERE user_id=${userId} AND product_id=${productId}`;
+    const countInOrders = await pool`SELECT COUNT(*) FROM "order" WHERE user_id=${userId} AND product_id=${productId}`;
     const product_qte = await pool`SELECT qte FROM product WHERE id=${productId}`;
 
-    if(+count[0].count === 0){
 
-        const productQte = +product_qte[0].qte;
+    if(+count[0].count !== 0){
+
+        const error = createError(httpStatus.FAIL,400,"Product Already In Cart");
+        return next(error);
+
+    }
+
+     if(+countInOrders[0].count !== 0){
+
+        const error = createError(httpStatus.FAIL,400,"Product Already In Orders Queue");
+        return next(error);
+
+    }
+
+    const productQte = +product_qte[0].qte;
 
         if(+qte <= productQte){
 
@@ -132,11 +146,6 @@ const addToCart = async (req,res,next)=>{
         res.json({status: httpStatus.FAIL,message: `${productQte === 0 ? 'This product is currently out of stock' : `Max Quantity is: ${productQte}`}`})
             
         }
-
-    } else{
-
-        res.json({status: httpStatus.FAIL,message: "Product Already In Cart"})
-    }
 
 
   } catch(err){
@@ -435,15 +444,17 @@ const getSimilarProducts = async (req,res,next)=>{
 
    try{
 
-    const product = await pool`SELECT id,brand FROM product WHERE name=${productName}`;
+    const product = await pool`SELECT id,brand,category_id FROM product WHERE name=${productName}`;
 
     const brand = product[0].brand;
     const productId = product[0].id;
+    const categoryId = product[0].category_id;
+
 
 
     const products = await pool`SELECT *
                                 FROM product
-                                WHERE id!=${productId} AND (
+                                WHERE id!=${productId} AND category_id=${categoryId} AND (
                                 LOWER(brand)=LOWER(${brand}) OR 
                                 POSITION(LOWER(${brand}) IN LOWER(brand)) > 0 OR
                                 POSITION(LOWER(brand) IN LOWER(${brand})) > 0)
