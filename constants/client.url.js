@@ -1,1 +1,1 @@
-module.exports = "http://localhost:3000";
+module.exports = process.env.URL_FE;
