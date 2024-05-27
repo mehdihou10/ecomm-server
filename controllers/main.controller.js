@@ -11,7 +11,7 @@ const getProducts = async (req,res,next)=>{
     
     try{
 
-        const products = await pool`SELECT * FROM product GROUP BY id ORDER BY (orders+views) DESC LIMIT 16`;
+        const products = await pool`SELECT * FROM product GROUP BY id ORDER BY (orders+views) DESC LIMIT 15`;
 
         res.json({status: httpStatus.SUCCESS,products});
 
